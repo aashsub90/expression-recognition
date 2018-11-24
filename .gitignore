@@ -1,0 +1,12 @@
+# Ignore data files
+fer2013/
+jaffe/
+
+# Ignore all .pyc and checkpoints
+*.pyc
+.ipynb_checkpoints/
+
+# Ignore all built models
+*.h5
+*.pkl
+*.yaml
