@@ -25,6 +25,11 @@ def get_data(name, data_file_path):
         print("Returning the fer2013 dataset...")
     return data
 
+def get_icvMEFED(name, data_file_path):
+    if name == 'icvMEFED':
+        rawData = pd.read_excel(data_file_path)
+        return rawData
+
 
 def generate_data_split(data, num_of_classes=7, name='fer2013'):
     '''
