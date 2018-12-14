@@ -1,0 +1,3 @@
+Sample_003_001.JPG	1_1
+Sample_005_001.JPG	1_2
+Sample_007_001.JPG	1_3

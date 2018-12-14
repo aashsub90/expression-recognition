@@ -14,6 +14,7 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix
 import sys
+from lib.preprocessing import make_sets, get_landmarks, normalize_data
 
 import os
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -23,14 +24,14 @@ def generate_model(X_train, Y_train):
     model = Sequential()
 
     model.add(Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
-                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(48, 48, 1)))
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(3456, 5184, 1)))
     model.add(MaxPooling2D(pool_size=(5, 5), strides=(
         2, 2), padding='valid', data_format=None))
 
     model.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
-                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(48, 48, 1)))
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(3456, 5184, 1)))
     model.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
-                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(48, 48, 1)))
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(3456, 5184, 1)))
     model.add(AveragePooling2D(pool_size=(3, 3), strides=(2, 2)))
 
     model.add(Conv2D(128, (3, 3), activation='relu'))
@@ -44,16 +45,21 @@ def generate_model(X_train, Y_train):
     model.add(Dense(1024, activation='relu'))
     model.add(Dropout(0.2))
 
-    model.add(Dense(7, activation='softmax'))
+    model.add(Dense(1, activation='softmax'))
 
     # Fit the model with the training data
     model = fit_model(model, X_train, Y_train)
     return model
 
 
-def fit_model(model, X_train, Y_train, batch_size=128, epochs=1, loss_function='categorical_crossentropy'):
+def fit_model(model, X_train, Y_train, batch_size=128, epochs=1, loss_function='sparse_categorical_crossentropy'):
     data_generator = ImageDataGenerator(featurewise_center=False, samplewise_center=False, featurewise_std_normalization=False, samplewise_std_normalization=False, zca_whitening=False, zca_epsilon=1e-06, rotation_range=0, width_shift_range=0.0, height_shift_range=0.0,
                                         brightness_range=None, shear_range=0.0, zoom_range=0.0, channel_shift_range=0.0, fill_mode='nearest', cval=0.0, horizontal_flip=False, vertical_flip=False, rescale=None, preprocessing_function=None, data_format=None, validation_split=0.0, dtype=None)
+    # print(np.array(X_train).reshape(
+    #   1, len(X_train[0]), len(X_train[0][0]), len(X_train)))
+    # X_train = np.array(X_train)
+    X_train = np.array(X_train).reshape(
+        len(X_train), len(X_train[0]), len(X_train[0][0]), 1)
     training_data_generator = data_generator.flow(
         X_train, Y_train, batch_size=batch_size)
     model.compile(loss=loss_function, optimizer=Adam(), metrics=['accuracy'])
@@ -141,13 +147,30 @@ def main(data_name):
     if(data_name == "fer2013"):
         name = "fer2013"
         data_file_path = "../../../data/fer2013/fer2013.csv"
+    else:
+        name = "icv_mefed"
+        train_path = "../../../data/icv_mefed/training/"
+        test_path = "../../../data/icv_mefed/testing/"
 
     # Obtain the data from the path provided
-    data = get_data(name=name, data_file_path=data_file_path)
+    # data = get_data(name=name, data_file_path=data_file_path)
+
+    # Obtain the data from the path provided
+    train_data = get_data(name=name, data_file_path=train_path+'training.txt')
+    training_data, training_labels = make_sets(
+        train_data, train_path, extract_landmarks=False)
+    test_data = get_data(name=name, data_file_path=test_path+'testing.txt')
+    testing_data, testing_labels = make_sets(
+        test_data, test_path, extract_landmarks=False)
 
     # Generate training and test sets from the data
-    X_train, Y_train, X_test, Y_test = generate_data_split(
-        data=data, num_of_classes=7, name=name)
+    # X_train, Y_train, X_test, Y_test = generate_data_split(data=data, num_of_classes=7, name=name)
+
+    # Turn the training set into a numpy array for the classifier
+    X_train = np.array(training_data)
+    Y_train = np.array(training_labels)
+    X_test = np.array(testing_data)
+    Y_test = np.array(testing_labels)
 
     # Pre-process the image data
     X_train, X_test = normalize_data(X_train, X_test)
@@ -162,8 +185,8 @@ def main(data_name):
     save_model(name="cnn", model=model)
 
     # Predict for a given sample
-    #sample_image_path = 'sample.png'
-    #predict(model, sample_image_path)
+    # sample_image_path = 'sample.png'
+    # predict(model, sample_image_path)
 
 
 if __name__ == "__main__":

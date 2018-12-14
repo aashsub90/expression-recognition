@@ -7,6 +7,7 @@ import numpy as np
 from keras.models import model_from_yaml
 import _pickle as cPickle
 from keras.utils import to_categorical
+import pandas as pd
 
 
 def get_data(name, data_file_path):
@@ -23,12 +24,12 @@ def get_data(name, data_file_path):
         data = np.array(data[1:])
         print("Number of images read: {}".format(data.size))
         print("Returning the fer2013 dataset...")
-    return data
-
-def get_icvMEFED(name, data_file_path):
-    if name == 'icvMEFED':
-        rawData = pd.read_excel(data_file_path)
-        return rawData
+        return data
+    else:
+        #data = pd.read_excel(data_file_path)
+        data = pd.read_csv(data_file_path, sep="\t", header=None)
+        data.columns = ["file_name", "label"]
+        return data
 
 
 def generate_data_split(data, num_of_classes=7, name='fer2013'):

@@ -1,0 +1,5 @@
+Sample_104_001.jpg	1_1
+Sample_104_002.jpg	1_1
+Sample_104_003.jpg	1_1
+Sample_104_004.jpg	1_1
+Sample_104_005.jpg	1_1

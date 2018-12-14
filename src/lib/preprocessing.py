@@ -1,6 +1,12 @@
+import math
 '''
     This file contains all the preprocessing functions used by different models
 '''
+import cv2
+import sys
+import dlib
+import numpy as np
+sys.path.append('../../lib/dlib')
 
 
 def normalize_data(X_train, X_test):
@@ -9,23 +15,22 @@ def normalize_data(X_train, X_test):
     X_train = X_train / 255
     X_test = X_test / 255
 
-    X_train = X_train.reshape(X_train.shape[0], 48, 48, 1).astype('float32')
-    X_test = X_test.reshape(X_test.shape[0], 48, 48, 1).astype('float32')
-
     return (X_train, X_test)
 
 
 def get_landmarks(image):
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    predictor = dlib.shape_predictor(
+        "/Users/Iris/SJSU/Fall_2018/CMPE_257/Project/Group/repo/expression-recognition/src/lib/shape_predictor_68_face_landmarks.dat")
     detections = detector(image, 1)
     data = {}
-    for k,d in enumerate(detections): #For all detected face instances individually
-        shape = predictor(image, d) #Draw Facial Landmarks with the predictor class
+    for k, d in enumerate(detections):  # For all detected face instances individually
+        # Draw Facial Landmarks with the predictor class
+        shape = predictor(image, d)
         xlist = []
         ylist = []
-        for i in range(1,68): #Store X and Y coordinates in two lists
+        for i in range(1, 68):  # Store X and Y coordinates in two lists
             xlist.append(float(shape.part(i).x))
             ylist.append(float(shape.part(i).y))
         xmean = np.mean(xlist)
@@ -36,36 +41,45 @@ def get_landmarks(image):
         for x, y, w, z in zip(xcentral, ycentral, xlist, ylist):
             landmarks_vectorised.append(w)
             landmarks_vectorised.append(z)
-            meannp = np.asarray((ymean,xmean))
-            coornp = np.asarray((z,w))
+            meannp = np.asarray((ymean, xmean))
+            coornp = np.asarray((z, w))
             dist = np.linalg.norm(coornp-meannp)
             landmarks_vectorised.append(dist)
             landmarks_vectorised.append((math.atan2(y, x)*360)/(2*math.pi))
         data['landmarks_vectorised'] = landmarks_vectorised
     if len(detections) < 1:
-        data['landmarks_vestorised'] = "error"
+        data['landmarks_vectorised'] = "error"
     return data
-        
-        
-        
-def make_sets(path,rawData):
+
+
+def make_sets(rawData, path, extract_landmarks=True):
     training_data = []
     training_labels = []
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 #     prediction_data = []
 #     prediction_labels = []
-    for i,j in zip(rawData['name'], rawData['label']):
-        image = cv2.imread(path+'/'+i) #open image
+    print('Reading from path: {}\n'.format(path))
+    for i, j in zip(rawData['file_name'], rawData['label']):
+        #print('Reading image: {}\n'.format(i))
+        image = cv2.imread(path+'/'+i)  # open image
         if image is None:
-            print("Could not read input image")
-            exit()
+            print("Warning - Could not read input image")
+            continue
         else:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) #convert to grayscale
+            # convert to grayscale
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             clahe_image = clahe.apply(gray)
-            get_landmarks(clahe_image)
-            if data['landmarks_vectorised'] == "error":
-                print("no face detected on this one")
+            if(extract_landmarks):
+                data = get_landmarks(clahe_image)
+                if data['landmarks_vectorised'] == "error":
+                    print("No face detected on this one")
+                else:
+                    # append image array to training data list
+                    training_data.append(data['landmarks_vectorised'])
+                    training_labels.append(j)
             else:
-                training_data.append(data['landmarks_vectorised']) #append image array to training data list
+                print(np.array(clahe_image).shape)
+                training_data.append(clahe_image)
                 training_labels.append(j)
-            
+
     return training_data, training_labels
