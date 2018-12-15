@@ -10,8 +10,8 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing import image
 from keras.optimizers import Adam
 from keras.models import model_from_yaml
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
+#import matplotlib.image as mpimg
+#import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix
 import sys
 from lib.preprocessing import make_sets, get_landmarks, normalize_data
@@ -24,14 +24,16 @@ def generate_model(X_train, Y_train):
     model = Sequential()
 
     model.add(Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
-                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(3456, 5184, 1)))
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(346, 518, 1)))
     model.add(MaxPooling2D(pool_size=(5, 5), strides=(
         2, 2), padding='valid', data_format=None))
 
     model.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
-                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(3456, 5184, 1)))
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(346, 518, 1)))
     model.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
-                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(3456, 5184, 1)))
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(346, 518, 1)))
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', dilation_rate=(1, 1), activation='relu', use_bias=True, kernel_initializer='glorot_uniform',
+                     bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, input_shape=(346, 518, 1)))
     model.add(AveragePooling2D(pool_size=(3, 3), strides=(2, 2)))
 
     model.add(Conv2D(128, (3, 3), activation='relu'))
@@ -45,14 +47,14 @@ def generate_model(X_train, Y_train):
     model.add(Dense(1024, activation='relu'))
     model.add(Dropout(0.2))
 
-    model.add(Dense(1, activation='softmax'))
+    model.add(Dense(50, activation='softmax'))
 
     # Fit the model with the training data
     model = fit_model(model, X_train, Y_train)
     return model
 
 
-def fit_model(model, X_train, Y_train, batch_size=128, epochs=1, loss_function='sparse_categorical_crossentropy'):
+def fit_model(model, X_train, Y_train, batch_size=2, epochs=1, loss_function='categorical_crossentropy'):
     data_generator = ImageDataGenerator(featurewise_center=False, samplewise_center=False, featurewise_std_normalization=False, samplewise_std_normalization=False, zca_whitening=False, zca_epsilon=1e-06, rotation_range=0, width_shift_range=0.0, height_shift_range=0.0,
                                         brightness_range=None, shear_range=0.0, zoom_range=0.0, channel_shift_range=0.0, fill_mode='nearest', cval=0.0, horizontal_flip=False, vertical_flip=False, rescale=None, preprocessing_function=None, data_format=None, validation_split=0.0, dtype=None)
     # print(np.array(X_train).reshape(
@@ -70,6 +72,10 @@ def fit_model(model, X_train, Y_train, batch_size=128, epochs=1, loss_function='
 
 def evaluate_model(model, X_train, Y_train, X_test, Y_test):
 
+    X_train = np.array(X_train).reshape(
+        len(X_train), len(X_train[0]), len(X_train[0][0]), 1)
+    X_test = np.array(X_train).reshape(
+        len(X_train), len(X_train[0]), len(X_train[0][0]), 1)
     train_score = model.evaluate(X_train, Y_train, verbose=0)
     test_score = model.evaluate(X_test, Y_test, verbose=0)
 
@@ -191,3 +197,4 @@ def main(data_name):
 
 if __name__ == "__main__":
     main(sys.argv[1])
+

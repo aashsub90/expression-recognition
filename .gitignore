@@ -1,7 +1,6 @@
 # Ignore data files
 fer2013/
 jaffe/
-icv_mefed/
 
 # Ignore all .pyc and checkpoints
 *.pyc
@@ -11,3 +10,9 @@ icv_mefed/
 *.h5
 *.pkl
 *.yaml
+
+# Ignore images
+*.jpg
+
+# Ignore logs
+*.log

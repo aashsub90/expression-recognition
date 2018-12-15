@@ -2,11 +2,35 @@ import tarfile
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import sklearn.preprocessing as pre
 from lib import get_data, generate_data_split, load_model, save_model
 from lib.preprocessing import make_sets, get_landmarks, normalize_data
 import sys
+from sklearn.model_selection import cross_val_score
+
+def find_k(X_train, Y_train):
+    myList = list(range(1, 20))
+    # subsetting just the odd ones
+    neighbors = list(filter(lambda x: x % 2 != 0, myList))
+    cv_scores = []
+    # perform 10-fold cross validation
+    for k in neighbors:
+        knn = KNeighborsClassifier(n_neighbors=k, n_jobs=-1)
+        scores = cross_val_score(knn, X_train, Y_train, cv=10, scoring='accuracy')
+    cv_scores.append(scores.mean())
+    MSE = [1 - x for x in cv_scores]
+    # determining best k
+    optimal_k = neighbors[MSE.index(min(MSE))]
+    print("The optimal number of neighbors is %d" % optimal_k)
+    # plot misclassification error vs k
+    fig = plt.figure()
+    plt.plot(neighbors, MSE)
+    plt.xlabel('Number of Neighbors K')
+    plt.ylabel('Misclassification Error')
+    fig.savefig('knn_cross_val_plot.png')
 
 
 def generate_model(X_train, Y_train):
@@ -57,6 +81,7 @@ def main(data_name):
     # Pre-process the image data
     X_train, X_test = normalize_data(X_train, X_test)
 
+    #find_k(X_train,Y_train)
     # Generate or load trained model
     model = generate_model(X_train, Y_train)
 

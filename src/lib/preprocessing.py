@@ -7,7 +7,7 @@ import sys
 import dlib
 import numpy as np
 sys.path.append('../../lib/dlib')
-
+from keras.utils import to_categorical
 
 def normalize_data(X_train, X_test):
 
@@ -22,7 +22,7 @@ def get_landmarks(image):
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(
-        "/Users/Iris/SJSU/Fall_2018/CMPE_257/Project/Group/repo/expression-recognition/src/lib/shape_predictor_68_face_landmarks.dat")
+        "../../lib/shape_predictor_68_face_landmarks.dat")
     detections = detector(image, 1)
     data = {}
     for k, d in enumerate(detections):  # For all detected face instances individually
@@ -59,8 +59,9 @@ def make_sets(rawData, path, extract_landmarks=True):
 #     prediction_data = []
 #     prediction_labels = []
     print('Reading from path: {}\n'.format(path))
+    print(rawData.label.unique())
     for i, j in zip(rawData['file_name'], rawData['label']):
-        #print('Reading image: {}\n'.format(i))
+        print('Reading image: {}\n'.format(i))
         image = cv2.imread(path+'/'+i)  # open image
         if image is None:
             print("Warning - Could not read input image")
@@ -70,7 +71,8 @@ def make_sets(rawData, path, extract_landmarks=True):
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             clahe_image = clahe.apply(gray)
             if(extract_landmarks):
-                data = get_landmarks(clahe_image)
+                data = get_landmarks(cv2.resize(clahe_image, None, fx=0.1, fy=0.1))
+                #data = get_landmarks(cv2.resize(clahe_image,(48,48)))
                 if data['landmarks_vectorised'] == "error":
                     print("No face detected on this one")
                 else:
@@ -79,7 +81,7 @@ def make_sets(rawData, path, extract_landmarks=True):
                     training_labels.append(j)
             else:
                 print(np.array(clahe_image).shape)
-                training_data.append(clahe_image)
-                training_labels.append(j)
+                training_data.append(cv2.resize(clahe_image, None, fx=0.1, fy=0.1))
+                training_labels.append(to_categorical(j, num_classes=None))
 
     return training_data, training_labels
